@@ -49,14 +49,9 @@ A full-stack healthcare facility finder with real-time search and auto-fill func
 
 4. **Start the development server:**
    
-   **For Windows (Command Prompt or PowerShell):**
+   **For Windows (Recommended):**
    ```bash
-   set NODE_ENV=development && tsx server/index.ts
-   ```
-   
-   **For Windows (PowerShell alternative):**
-   ```powershell
-   $env:NODE_ENV="development"; tsx server/index.ts
+   node start-local.js
    ```
    
    **For Mac/Linux:**
