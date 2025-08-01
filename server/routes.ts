@@ -3,137 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertHealthcareFacilitySchema, insertSearchHistorySchema } from "@shared/schema";
 
-// Healthcare API configuration
-const NEW_API_KEY = process.env.NEW_API_KEY; // You'll need to provide this
-const NEW_API_BASE_URL = process.env.NEW_API_BASE_URL; // You'll need to provide this
-
-// Temporary mock data - will be replaced with your actual API
-const mockHealthcareFacilities = [
-  {
-    placeId: "mock_apollo_1",
-    name: "Apollo Hospital",
-    type: "hospital",
-    address: "320 Fortis Blvd, Downtown Medical District, NY 10001",
-    phone: "+1 (555) 123-4567",
-    hours: "Mon-Sun: 24 hours",
-    rating: "4.5",
-    distance: "0.8 miles",
-    latitude: "40.7128",
-    longitude: "-74.0060"
-  },
-  {
-    placeId: "mock_cvs_1",
-    name: "CVS Pharmacy",
-    type: "pharmacy",
-    address: "150 Health Ave, Medical Plaza, NY 10002",
-    phone: "+1 (555) 234-5678",
-    hours: "Mon-Fri: 8AM-10PM, Sat-Sun: 9AM-9PM",
-    rating: "4.2",
-    distance: "0.5 miles",
-    latitude: "40.7589",
-    longitude: "-73.9851"
-  },
-  {
-    placeId: "mock_wellness_1",
-    name: "Wellness Medical Clinic",
-    type: "clinic",
-    address: "45 Care Street, Healthcare Center, NY 10003",
-    phone: "+1 (555) 345-6789",
-    hours: "Mon-Fri: 7AM-8PM, Sat: 8AM-5PM",
-    rating: "4.7",
-    distance: "1.2 miles",
-    latitude: "40.7282",
-    longitude: "-73.9942"
-  },
-  {
-    placeId: "mock_walgreens_1",
-    name: "Walgreens Pharmacy",
-    type: "pharmacy",
-    address: "89 Prescription Way, Pharmacy District, NY 10004",
-    phone: "+1 (555) 456-7890",
-    hours: "Mon-Sun: 7AM-11PM",
-    rating: "4.1",
-    distance: "1.5 miles",
-    latitude: "40.7505",
-    longitude: "-73.9934"
-  },
-  {
-    placeId: "mock_mercy_1",
-    name: "Mercy General Hospital",
-    type: "hospital",
-    address: "200 Emergency Lane, Hospital Quarter, NY 10005",
-    phone: "+1 (555) 567-8901",
-    hours: "Mon-Sun: 24 hours",
-    rating: "4.3",
-    distance: "2.1 miles",
-    latitude: "40.7416",
-    longitude: "-74.0032"
-  },
-  {
-    placeId: "mock_family_1",
-    name: "Family Health Clinic",
-    type: "clinic",
-    address: "78 Community Road, Family Care Center, NY 10006",
-    phone: "+1 (555) 678-9012",
-    hours: "Mon-Fri: 8AM-6PM, Sat: 9AM-3PM",
-    rating: "4.6",
-    distance: "1.8 miles",
-    latitude: "40.7348",
-    longitude: "-73.9903"
-  },
-  {
-    placeId: "mock_rite_aid_1",
-    name: "Rite Aid Pharmacy",
-    type: "pharmacy",
-    address: "123 Medicine Street, Pharmacy Row, NY 10007",
-    phone: "+1 (555) 789-0123",
-    hours: "Mon-Fri: 8AM-9PM, Sat-Sun: 9AM-7PM",
-    rating: "4.0",
-    distance: "2.3 miles",
-    latitude: "40.7580",
-    longitude: "-73.9855"
-  },
-  {
-    placeId: "mock_urgent_1",
-    name: "Urgent Care Plus",
-    type: "clinic",
-    address: "56 Quick Care Ave, Urgent Medical Plaza, NY 10008",
-    phone: "+1 (555) 890-1234",
-    hours: "Mon-Sun: 7AM-10PM",
-    rating: "4.4",
-    distance: "1.0 miles",
-    latitude: "40.7614",
-    longitude: "-73.9776"
-  },
-  {
-    placeId: "mock_mount_1",
-    name: "Mount Sinai Medical Center",
-    type: "hospital",
-    address: "1468 Madison Avenue, Upper East Side, NY 10029",
-    phone: "+1 (555) 901-2345",
-    hours: "Mon-Sun: 24 hours",
-    rating: "4.8",
-    distance: "3.2 miles",
-    latitude: "40.7891",
-    longitude: "-73.9482"
-  },
-  {
-    placeId: "mock_duane_1",
-    name: "Duane Reade Pharmacy",
-    type: "pharmacy",
-    address: "Broadway & 72nd Street, Upper West Side, NY 10023",
-    phone: "+1 (555) 012-3456",
-    hours: "Mon-Sun: 24 hours",
-    rating: "3.9",
-    distance: "2.8 miles",
-    latitude: "40.7782",
-    longitude: "-73.9826"
-  }
-];
+const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.PLACES_API_KEY;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Search healthcare facilities using new API
+  // Search healthcare facilities using Google Places API
   app.get("/api/search-facilities", async (req, res) => {
     try {
       const { query, location } = req.query;
@@ -142,27 +16,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Search query is required" });
       }
 
-      // Filter mock facilities based on search query
-      const searchTerm = query.toLowerCase();
-      const filteredFacilities = mockHealthcareFacilities.filter(facility =>
-        facility.name.toLowerCase().includes(searchTerm) ||
-        facility.type.toLowerCase().includes(searchTerm) ||
-        facility.address.toLowerCase().includes(searchTerm)
-      );
+      if (!GOOGLE_PLACES_API_KEY) {
+        return res.status(500).json({ error: "Google Places API key not configured" });
+      }
 
-      // Store facilities in our database and return them
+      // Search for healthcare facilities using Google Places Text Search
+      const searchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json');
+      searchUrl.searchParams.set('query', `${query} hospital pharmacy clinic`);
+      searchUrl.searchParams.set('type', 'health');
+      searchUrl.searchParams.set('key', GOOGLE_PLACES_API_KEY);
+      
+      if (location && typeof location === 'string') {
+        searchUrl.searchParams.set('location', location);
+        searchUrl.searchParams.set('radius', '10000');
+      }
+
+      const response = await fetch(searchUrl.toString());
+      const data = await response.json();
+
+      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        throw new Error(`Google Places API error: ${data.status}`);
+      }
+
       const facilities = await Promise.all(
-        filteredFacilities.slice(0, 10).map(async (facilityData) => {
-          // Check if facility already exists
-          let storedFacility = await storage.getFacilityByPlaceId(facilityData.placeId);
-          if (!storedFacility) {
-            storedFacility = await storage.createFacility(facilityData);
+        (data.results || []).slice(0, 10).map(async (place: any) => {
+          // Get detailed information about each place
+          const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+          detailsUrl.searchParams.set('place_id', place.place_id);
+          detailsUrl.searchParams.set('fields', 'name,formatted_address,formatted_phone_number,opening_hours,rating,types,geometry');
+          detailsUrl.searchParams.set('key', GOOGLE_PLACES_API_KEY);
+
+          try {
+            const detailsResponse = await fetch(detailsUrl.toString());
+            const detailsData = await detailsResponse.json();
+            
+            if (detailsData.status === 'OK') {
+              const details = detailsData.result;
+              
+              // Determine facility type based on Google types
+              let facilityType = 'clinic';
+              if (details.types?.includes('hospital')) {
+                facilityType = 'hospital';
+              } else if (details.types?.includes('pharmacy')) {
+                facilityType = 'pharmacy';
+              } else if (details.types?.includes('health')) {
+                facilityType = 'clinic';
+              }
+
+              // Format opening hours
+              let hours = 'Hours not available';
+              if (details.opening_hours?.weekday_text) {
+                hours = details.opening_hours.weekday_text.join(', ');
+              }
+
+              const facility = {
+                placeId: place.place_id,
+                name: details.name || place.name,
+                type: facilityType,
+                address: details.formatted_address || place.formatted_address,
+                phone: details.formatted_phone_number || null,
+                hours: hours,
+                rating: details.rating ? details.rating.toString() : null,
+                distance: null, // Could calculate if user location provided
+                latitude: details.geometry?.location?.lat?.toString() || null,
+                longitude: details.geometry?.location?.lng?.toString() || null,
+              };
+
+              // Store facility in our database
+              let storedFacility = await storage.getFacilityByPlaceId(place.place_id);
+              if (!storedFacility) {
+                storedFacility = await storage.createFacility(facility);
+              }
+
+              return storedFacility;
+            }
+          } catch (error) {
+            console.error('Error fetching place details:', error);
           }
+
+          // Fallback if details fetch fails
+          const basicFacility = {
+            placeId: place.place_id,
+            name: place.name,
+            type: 'clinic',
+            address: place.formatted_address,
+            phone: null,
+            hours: 'Hours not available',
+            rating: place.rating ? place.rating.toString() : null,
+            distance: null,
+            latitude: place.geometry?.location?.lat?.toString() || null,
+            longitude: place.geometry?.location?.lng?.toString() || null,
+          };
+
+          let storedFacility = await storage.getFacilityByPlaceId(place.place_id);
+          if (!storedFacility) {
+            storedFacility = await storage.createFacility(basicFacility);
+          }
+
           return storedFacility;
         })
       );
 
-      res.json({ facilities });
+      res.json({ facilities: facilities.filter(Boolean) });
     } catch (error) {
       console.error('Search facilities error:', error);
       res.status(500).json({ 

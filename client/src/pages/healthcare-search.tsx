@@ -183,14 +183,9 @@ export default function HealthcareSearch() {
                 <div className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto z-10">
                   {searchError && (
                     <div className="p-4 text-sm text-red-600 border-b border-slate-100">
-                      <div className="flex items-start">
-                        <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <div className="font-medium mb-1">Search Failed</div>
-                          <div className="text-xs whitespace-pre-line">
-                            {(searchError as any)?.message || "Failed to search facilities. Please check your connection and try again."}
-                          </div>
-                        </div>
+                      <div className="flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        Failed to search facilities. Please check your connection and try again.
                       </div>
                     </div>
                   )}
