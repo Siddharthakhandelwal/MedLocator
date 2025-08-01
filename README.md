@@ -1,6 +1,11 @@
-# Healthcare Facility Search Application
+# MedLocator - Healthcare Facility Finder
 
-A full-stack healthcare facility finder with real-time search and auto-fill functionality using React, Express, and Google Places API.
+A full-stack healthcare facility search application with real-time search and auto-fill functionality. Built with React, Express, TypeScript, and Google Places API integration.
+
+![Healthcare Search Demo](https://img.shields.io/badge/status-production%20ready-brightgreen)
+![Node.js](https://img.shields.io/badge/node.js-18%2B-green)
+![TypeScript](https://img.shields.io/badge/typescript-5.6-blue)
+![React](https://img.shields.io/badge/react-18.3-blue)
 
 ## Features
 
@@ -19,10 +24,10 @@ A full-stack healthcare facility finder with real-time search and auto-fill func
 
 ### Installation
 
-1. **Clone and install dependencies:**
+1. **Clone the repository:**
    ```bash
-   git clone <your-repo-url>
-   cd healthcare-search
+   git clone https://github.com/yourusername/medlocator.git
+   cd medlocator
    npm install
    ```
 
