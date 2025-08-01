@@ -33,7 +33,7 @@ export default function HealthcareSearch() {
 
   // Search facilities query
   const { data: searchData, error: searchError, isLoading } = useQuery({
-    queryKey: ["/api/search-facilities", debouncedQuery],
+    queryKey: [`/api/search-facilities?query=${encodeURIComponent(debouncedQuery)}`],
     enabled: debouncedQuery.length >= 2,
   });
 
