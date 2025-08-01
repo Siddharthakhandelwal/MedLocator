@@ -48,6 +48,18 @@ A full-stack healthcare facility finder with real-time search and auto-fill func
    - Copy the API key to your `.env` file
 
 4. **Start the development server:**
+   
+   **For Windows (Command Prompt or PowerShell):**
+   ```bash
+   set NODE_ENV=development && tsx server/index.ts
+   ```
+   
+   **For Windows (PowerShell alternative):**
+   ```powershell
+   $env:NODE_ENV="development"; tsx server/index.ts
+   ```
+   
+   **For Mac/Linux:**
    ```bash
    npm run dev
    ```
