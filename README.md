@@ -131,4 +131,25 @@ The application uses Google Places API for real healthcare facility data:
 
 ## Deployment
 
-The application is ready for deployment on platforms like Replit, Vercel, or any Node.js hosting service. Make sure to set the `GOOGLE_PLACES_API_KEY` environment variable in your deployment platform.
+### Deploying to Vercel
+
+1. **Push your code to GitHub**
+
+2. **Connect to Vercel**:
+   - Go to [Vercel](https://vercel.com) and sign in
+   - Click "New Project" and import your GitHub repository
+   - Select the MedLocator repository
+
+3. **Configure Environment Variables**:
+   - Add `GOOGLE_PLACES_API_KEY` with your Google Places API key
+   - Set `NODE_ENV` to `production`
+
+4. **Deploy**:
+   - Click "Deploy"
+   - Vercel will automatically detect the project configuration and deploy it
+
+5. **Verify Deployment**:
+   - Once deployed, Vercel will provide a URL to access your application
+   - Test the application to ensure all features work correctly
+
+The application is also ready for deployment on other platforms like Replit or any Node.js hosting service. Make sure to set the `GOOGLE_PLACES_API_KEY` environment variable in your deployment platform.

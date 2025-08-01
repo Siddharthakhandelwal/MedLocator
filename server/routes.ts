@@ -2,8 +2,28 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertHealthcareFacilitySchema, insertSearchHistorySchema } from "@shared/schema";
+import fs from 'fs';
+import path from 'path';
 
-const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.PLACES_API_KEY;
+// Manually load API key from .env file
+let GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.PLACES_API_KEY;
+
+// If API key is not set in environment, try to read from .env file
+if (!GOOGLE_PLACES_API_KEY) {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const apiKeyMatch = envContent.match(/GOOGLE_PLACES_API_KEY=["\'](.*?)["\']/);
+      if (apiKeyMatch && apiKeyMatch[1]) {
+        GOOGLE_PLACES_API_KEY = apiKeyMatch[1];
+        console.log('Loaded Google Places API key from .env file');
+      }
+    }
+  } catch (error) {
+    console.error('Error loading .env file:', error);
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
