@@ -1,13 +1,17 @@
 // Simple Node.js script to start the server on Windows with localhost binding
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Set environment variables
 process.env.NODE_ENV = 'development';
 process.env.PORT = '5000';
 
 // Create a modified server file for local development
-const fs = require('fs');
 const serverPath = path.join(__dirname, 'server', 'index.ts');
 const localServerPath = path.join(__dirname, 'server', 'index-local.ts');
 

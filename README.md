@@ -54,9 +54,14 @@ A full-stack healthcare facility search application with real-time search and au
 
 4. **Start the development server:**
    
-   **For Windows (Recommended):**
+   **For Windows:**
    ```bash
    node start-local.js
+   ```
+   
+   **Alternative for Windows (if the above doesn't work):**
+   ```bash
+   npx cross-env NODE_ENV=development npx tsx server/index.ts
    ```
    
    **For Mac/Linux:**
