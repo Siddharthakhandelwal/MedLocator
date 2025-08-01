@@ -3,7 +3,11 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertHealthcareFacilitySchema, insertSearchHistorySchema } from "@shared/schema";
 
-// Mock healthcare facilities data for demonstration
+// Healthcare API configuration
+const NEW_API_KEY = process.env.NEW_API_KEY; // You'll need to provide this
+const NEW_API_BASE_URL = process.env.NEW_API_BASE_URL; // You'll need to provide this
+
+// Temporary mock data - will be replaced with your actual API
 const mockHealthcareFacilities = [
   {
     placeId: "mock_apollo_1",
@@ -129,7 +133,7 @@ const mockHealthcareFacilities = [
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Search healthcare facilities using Google Places API
+  // Search healthcare facilities using new API
   app.get("/api/search-facilities", async (req, res) => {
     try {
       const { query, location } = req.query;
@@ -138,133 +142,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Search query is required" });
       }
 
-      if (!GOOGLE_PLACES_API_KEY) {
-        return res.status(500).json({ error: "Google Places API key not configured" });
-      }
+      // Filter mock facilities based on search query
+      const searchTerm = query.toLowerCase();
+      const filteredFacilities = mockHealthcareFacilities.filter(facility =>
+        facility.name.toLowerCase().includes(searchTerm) ||
+        facility.type.toLowerCase().includes(searchTerm) ||
+        facility.address.toLowerCase().includes(searchTerm)
+      );
 
-      // Search for healthcare facilities using Google Places Text Search
-      const searchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json');
-      searchUrl.searchParams.set('query', `${query} hospital pharmacy clinic`);
-      searchUrl.searchParams.set('type', 'health');
-      searchUrl.searchParams.set('key', GOOGLE_PLACES_API_KEY);
-      
-      if (location && typeof location === 'string') {
-        searchUrl.searchParams.set('location', location);
-        searchUrl.searchParams.set('radius', '10000');
-      }
-
-      const response = await fetch(searchUrl.toString());
-      const data = await response.json();
-
-      if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        console.error('Google Places API Error Details:', {
-          status: data.status,
-          error_message: data.error_message,
-          url: searchUrl.toString()
-        });
-        throw new Error(`Google Places API error: ${data.status}${data.error_message ? ` - ${data.error_message}` : ''}`);
-      }
-
+      // Store facilities in our database and return them
       const facilities = await Promise.all(
-        (data.results || []).slice(0, 10).map(async (place: any) => {
-          // Get detailed information about each place
-          const detailsUrl = new URL('https://maps.googleapis.com/maps/api/place/details/json');
-          detailsUrl.searchParams.set('place_id', place.place_id);
-          detailsUrl.searchParams.set('fields', 'name,formatted_address,formatted_phone_number,opening_hours,rating,types,geometry');
-          detailsUrl.searchParams.set('key', GOOGLE_PLACES_API_KEY);
-
-          try {
-            const detailsResponse = await fetch(detailsUrl.toString());
-            const detailsData = await detailsResponse.json();
-            
-            if (detailsData.status === 'OK') {
-              const details = detailsData.result;
-              
-              // Determine facility type based on Google types
-              let facilityType = 'clinic';
-              if (details.types?.includes('hospital')) {
-                facilityType = 'hospital';
-              } else if (details.types?.includes('pharmacy')) {
-                facilityType = 'pharmacy';
-              } else if (details.types?.includes('health')) {
-                facilityType = 'clinic';
-              }
-
-              // Format opening hours
-              let hours = 'Hours not available';
-              if (details.opening_hours?.weekday_text) {
-                hours = details.opening_hours.weekday_text.join(', ');
-              }
-
-              const facility = {
-                placeId: place.place_id,
-                name: details.name || place.name,
-                type: facilityType,
-                address: details.formatted_address || place.formatted_address,
-                phone: details.formatted_phone_number || null,
-                hours: hours,
-                rating: details.rating ? details.rating.toString() : null,
-                distance: null, // Could calculate if user location provided
-                latitude: details.geometry?.location?.lat?.toString() || null,
-                longitude: details.geometry?.location?.lng?.toString() || null,
-              };
-
-              // Store facility in our database
-              let storedFacility = await storage.getFacilityByPlaceId(place.place_id);
-              if (!storedFacility) {
-                storedFacility = await storage.createFacility(facility);
-              }
-
-              return storedFacility;
-            }
-          } catch (error) {
-            console.error('Error fetching place details:', error);
-          }
-
-          // Fallback if details fetch fails
-          const basicFacility = {
-            placeId: place.place_id,
-            name: place.name,
-            type: 'clinic',
-            address: place.formatted_address,
-            phone: null,
-            hours: 'Hours not available',
-            rating: place.rating ? place.rating.toString() : null,
-            distance: null,
-            latitude: place.geometry?.location?.lat?.toString() || null,
-            longitude: place.geometry?.location?.lng?.toString() || null,
-          };
-
-          let storedFacility = await storage.getFacilityByPlaceId(place.place_id);
+        filteredFacilities.slice(0, 10).map(async (facilityData) => {
+          // Check if facility already exists
+          let storedFacility = await storage.getFacilityByPlaceId(facilityData.placeId);
           if (!storedFacility) {
-            storedFacility = await storage.createFacility(basicFacility);
+            storedFacility = await storage.createFacility(facilityData);
           }
-
           return storedFacility;
         })
       );
 
-      res.json({ facilities: facilities.filter(Boolean) });
+      res.json({ facilities });
     } catch (error) {
       console.error('Search facilities error:', error);
-      
-      // Provide more specific error messages
-      let errorMessage = "Failed to search facilities. Please check your connection and try again.";
-      
-      if (error instanceof Error) {
-        if (error.message.includes('REQUEST_DENIED')) {
-          errorMessage = "Google Places API access denied. Please check that:\n" +
-                        "1. Places API is enabled in your Google Cloud Console\n" +
-                        "2. Your API key has the correct permissions\n" +
-                        "3. Billing is set up for your Google Cloud project";
-        } else if (error.message.includes('OVER_QUERY_LIMIT')) {
-          errorMessage = "Google Places API quota exceeded. Please check your usage limits.";
-        } else if (error.message.includes('INVALID_REQUEST')) {
-          errorMessage = "Invalid search request. Please try a different search term.";
-        }
-      }
-      
-      res.status(500).json({ error: errorMessage });
+      res.status(500).json({ 
+        error: "Failed to search facilities. Please check your connection and try again." 
+      });
     }
   });
 
