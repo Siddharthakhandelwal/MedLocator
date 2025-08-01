@@ -35,7 +35,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = await response.json();
 
       if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        throw new Error(`Google Places API error: ${data.status}`);
+        console.error('Google Places API Error Details:', {
+          status: data.status,
+          error_message: data.error_message,
+          url: searchUrl.toString()
+        });
+        throw new Error(`Google Places API error: ${data.status}${data.error_message ? ` - ${data.error_message}` : ''}`);
       }
 
       const facilities = await Promise.all(
@@ -120,9 +125,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ facilities: facilities.filter(Boolean) });
     } catch (error) {
       console.error('Search facilities error:', error);
-      res.status(500).json({ 
-        error: "Failed to search facilities. Please check your connection and try again." 
-      });
+      
+      // Provide more specific error messages
+      let errorMessage = "Failed to search facilities. Please check your connection and try again.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('REQUEST_DENIED')) {
+          errorMessage = "Google Places API access denied. Please check that:\n" +
+                        "1. Places API is enabled in your Google Cloud Console\n" +
+                        "2. Your API key has the correct permissions\n" +
+                        "3. Billing is set up for your Google Cloud project";
+        } else if (error.message.includes('OVER_QUERY_LIMIT')) {
+          errorMessage = "Google Places API quota exceeded. Please check your usage limits.";
+        } else if (error.message.includes('INVALID_REQUEST')) {
+          errorMessage = "Invalid search request. Please try a different search term.";
+        }
+      }
+      
+      res.status(500).json({ error: errorMessage });
     }
   });
 
