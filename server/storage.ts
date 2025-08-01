@@ -56,7 +56,13 @@ export class MemStorage implements IStorage {
   async createFacility(insertFacility: InsertHealthcareFacility): Promise<HealthcareFacility> {
     const id = randomUUID();
     const facility: HealthcareFacility = { 
-      ...insertFacility, 
+      ...insertFacility,
+      phone: insertFacility.phone || null,
+      hours: insertFacility.hours || null,
+      rating: insertFacility.rating || null,
+      distance: insertFacility.distance || null,
+      latitude: insertFacility.latitude || null,
+      longitude: insertFacility.longitude || null,
       id,
       createdAt: new Date()
     };
@@ -85,7 +91,9 @@ export class MemStorage implements IStorage {
   async createSearchHistory(insertSearch: InsertSearchHistory): Promise<SearchHistory> {
     const id = randomUUID();
     const search: SearchHistory = { 
-      ...insertSearch, 
+      ...insertSearch,
+      userId: insertSearch.userId || null,
+      facilityId: insertSearch.facilityId || null,
       id,
       createdAt: new Date()
     };

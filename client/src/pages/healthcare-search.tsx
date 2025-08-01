@@ -53,7 +53,7 @@ export default function HealthcareSearch() {
     },
   });
 
-  const facilities = searchData?.facilities || [];
+  const facilities = (searchData as { facilities?: HealthcareFacility[] })?.facilities || [];
 
   useEffect(() => {
     if (debouncedQuery.length >= 2) {
@@ -196,7 +196,7 @@ export default function HealthcareSearch() {
                     </div>
                   )}
 
-                  {facilities.map((facility) => (
+                  {facilities.map((facility: HealthcareFacility) => (
                     <div
                       key={facility.id}
                       onClick={() => handleFacilitySelect(facility)}
@@ -343,14 +343,14 @@ export default function HealthcareSearch() {
         </Card>
 
         {/* Recent Searches */}
-        {historyData?.history && historyData.history.length > 0 && (
+        {(historyData as { history?: SearchResult[] })?.history && (historyData as { history?: SearchResult[] }).history!.length > 0 && (
           <Card className="mt-8 p-6">
             <CardHeader className="px-0 pt-0">
               <CardTitle className="text-lg font-semibold text-slate-900">Recent Searches</CardTitle>
             </CardHeader>
             <CardContent className="px-0 pb-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {historyData.history.slice(0, 6).map((search: SearchResult) => (
+                {((historyData as { history?: SearchResult[] })?.history || []).slice(0, 6).map((search: SearchResult) => (
                   <div
                     key={search.id}
                     onClick={() => search.facility && handleFacilitySelect(search.facility)}
